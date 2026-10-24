@@ -8,6 +8,8 @@ predefined abnormal behaviour (connection floods and port scans) and **responds 
 modifying SDN forwarding rules**: the OpenFlow controller installs a DROP rule for the offending source
 within about 1 ms of detection.
 
+For copy-ready setup, startup, traffic-generation, log-inspection, and cleanup commands, see the [NIDR Command Reference](COMMANDS.md).
+
 ---
 
 ## Table of contents
