@@ -193,7 +193,7 @@ PAGE = r"""<!DOCTYPE html>
   <section class="card p-5 rounded-2xl flex flex-wrap gap-4 items-center justify-between">
     <div>
       <h2 class="text-sm font-semibold">Controlled Mininet traffic</h2>
-      <p class="text-white/50 text-xs mt-1">Actions run from h4 to h1. Ryu detects the real packets and applies any block.</p>
+      <p class="text-white/50 text-xs mt-1">Actions run from the selected Mininet sender to h1. Ryu detects the real packets and applies any block.</p>
       <p id="lab-status" class="text-xs text-amber-300 mt-2">Checking Mininet…</p>
     </div>
     <div class="flex flex-wrap gap-2">

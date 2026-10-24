@@ -31,7 +31,7 @@ ACTION_API_PORT = 8765
 
 
 class DashboardActionHandler(BaseHTTPRequestHandler):
-    """Local-only bridge that launches controlled traffic inside Mininet h4."""
+    """Local-only bridge that launches controlled traffic from a Mininet sender."""
 
     def __init__(self, *args, net, **kwargs):
         self.net = net

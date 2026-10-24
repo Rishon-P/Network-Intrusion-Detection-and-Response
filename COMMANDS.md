@@ -15,15 +15,15 @@ For the controller and dashboard terminals, change to your clone's directory and
 
 ```bash
 cd /path/to/Network-Intrusion-Detection-and-Response
-source ryu-env/bin/activate
+source ~/ryu-env/bin/activate
 ```
 
 | Command | What it does |
 |---|---|
 | `cd /path/to/Network-Intrusion-Detection-and-Response` | Replace the placeholder with the path where you cloned the repository. |
-| `source ryu-env/bin/activate` | Activates the Python environment containing Ryu and the dashboard packages. Use this in the controller and dashboard terminals. |
+| `source ~/ryu-env/bin/activate` | Activates the Python environment containing Ryu and the dashboard packages. Use this in the controller and dashboard terminals. |
 
-If your virtual environment is stored elsewhere, activate it by its own path instead, for example `source ~/ryu-env/bin/activate`.
+If you installed the virtual environment inside the repository instead, activate it with `source ryu-env/bin/activate`.
 
 ## 2. Start the live demo
 
