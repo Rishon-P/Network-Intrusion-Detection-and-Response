@@ -45,9 +45,8 @@ within about 1 ms of detection.
            Mininet network (one Open vSwitch s1, OpenFlow 1.3)
 
    h1 10.0.0.1  TCP server        (apps/server.py)  ---+
-   h2 10.0.0.2  benign client     (apps/client.py)  ---+
-   h3 10.0.0.3  benign client / second attacker     ---+---- s1 ===== Ryu controller (controller/ids_ryu.py)
-   h4 10.0.0.4  attacker          (apps/attacker.py) --+              |
+   h2-h3         benign clients                      ---+
+   h4-h10        selectable dashboard senders        ---+---- s1 ===== Ryu controller (controller/ids_ryu.py)
                                                                       +--> results/events.jsonl --> dashboard (browser)
 ```
 
@@ -167,12 +166,19 @@ python3 dashboard/dashboard.py
 ```bash
 sudo python3 topology/topo.py
 ```
-Then, at the `mininet>` prompt (type only the command, not the prompt):
+When the topology starts, it exposes a loopback-only action endpoint for the dashboard. The topology includes sender hosts `h2`–`h10`; **+ Add sender** reveals them in the dashboard one at a time. Choose a visible sender, then launch the fixed flood or scan workload from that real Mininet host to `h1`. Ryu still performs the detection and installs any block.
+
+At the `mininet>` prompt (type only the command, not the prompt), start the TCP service:
+
+```text
+h1 python3 apps/server.py --host 10.0.0.1 --log results/server_log.csv &
+```
+
+Open the dashboard at http://127.0.0.1:8000. Its sender controls become available when Mininet is running. The flood uses 200 connections/s for 5 s; the scan probes ports 1–200. The generated TCP traffic crosses `s1`, so alerts and blocks shown in the dashboard come from the Ryu controller. You can also use the Mininet CLI commands below:
 
 | Command | What it does |
 |---|---|
 | `pingall` | every host pings every other host; expect 0% dropped, proving network and controller work |
-| `h1 python3 apps/server.py --host 10.0.0.1 --log results/server_log.csv &` | starts the TCP server on h1 (port 8080) |
 | `h2 python3 apps/client.py --host 10.0.0.1 --duration 600 --out results/h2.csv &` | normal client on h2 sending about 5 requests/s for 10 minutes |
 | `h4 python3 apps/attacker.py --host 10.0.0.1 --mode flood --rate 200 --duration 5` | h4 floods the server with 200 connections/s for 5 s |
 | `sh ovs-ofctl -O OpenFlow13 dump-flows s1 \| grep drop` | shows the DROP rule `nw_src=10.0.0.4 actions=drop` installed in the switch |
@@ -288,6 +294,7 @@ Server options: `--workers`, `--service-time`, `--queue-size`. Attacker options:
 | `has inconsistent version: expected '4.34', but metadata has '0.0.0'` | prefix the install with `PBR_VERSION=4.34` |
 | `ImportError ... eventlet` | `pip install eventlet==0.30.2` inside `~/ryu-env` |
 | Dashboard shows "Connecting…" and the terminal says "No supported WebSocket library" | `pip install "uvicorn[standard]"` in `~/ryu-env`, restart the dashboard |
+| Dashboard traffic buttons stay disabled | start or restart `sudo python3 topology/topo.py`; the dashboard checks its local Mininet action endpoint |
 | Switch never connects / `pingall` shows packet loss | start the controller first, then Mininet; run `sudo mn -c` |
 | Port 6653 already in use | `pkill -f ryu-manager` |
 | `rm: Permission denied` in `results/` | files were created by `sudo`; use `sudo rm -rf results/...` or `sudo chown -R $USER:$USER .` |
