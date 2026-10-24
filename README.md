@@ -2,7 +2,6 @@
 
 **Computer Networks (UE25CS243A) – Jackfruit Mini Project #25: Network Intrusion Detection and Response (TCP)**
 
-Team: `<names / SRNs>`
 
 An intrusion-detection prototype that analyses TCP socket traffic inside a Mininet network, detects
 predefined abnormal behaviour (connection floods and port scans) and **responds dynamically by
