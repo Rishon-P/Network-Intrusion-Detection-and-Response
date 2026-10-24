@@ -1,0 +1,1 @@
+{"mode": "flood", "target": "10.0.0.1", "start_ts": 1792802062.1772528, "end_ts": 1792802065.688439, "attempts": 601, "reached": 30, "cutoff_s": 0.145, "rate": 200.0, "delay": null, "open": 30, "refused": 0, "timeout": 571, "error": 0}

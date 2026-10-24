@@ -1,0 +1,26 @@
+{"ts": 1792801965.4331727, "type": "controller_start", "mode": "ids", "config": {"rate_window": 1.0, "rate_threshold": 30, "port_window": 5.0, "port_threshold": 10, "block_timeout": 60, "static_delay": 5.0, "flow_idle": 5}}
+{"ts": 1792801966.0299842, "type": "switch_connected", "mode": "ids", "dpid": 1}
+{"ts": 1792801966.435365, "type": "stats", "mode": "ids", "syn_rate": {}, "counters": {"tcp_packet_in": 0, "new_connections": 0, "detections": 0, "blocks": 0}, "blocked": [], "rate_threshold": 30, "port_threshold": 10}
+{"ts": 1792801966.4363883, "type": "flow_stats", "mode": "ids", "dpid": 1, "active_flows": 0, "flow_packets": 0, "flow_bytes": 0, "drop_rules": []}
+{"ts": 1792801967.4372344, "type": "stats", "mode": "ids", "syn_rate": {}, "counters": {"tcp_packet_in": 0, "new_connections": 0, "detections": 0, "blocks": 0}, "blocked": [], "rate_threshold": 30, "port_threshold": 10}
+{"ts": 1792801967.438168, "type": "flow_stats", "mode": "ids", "dpid": 1, "active_flows": 0, "flow_packets": 0, "flow_bytes": 0, "drop_rules": []}
+{"ts": 1792801968.4390798, "type": "stats", "mode": "ids", "syn_rate": {}, "counters": {"tcp_packet_in": 0, "new_connections": 0, "detections": 0, "blocks": 0}, "blocked": [], "rate_threshold": 30, "port_threshold": 10}
+{"ts": 1792801968.4401896, "type": "flow_stats", "mode": "ids", "dpid": 1, "active_flows": 0, "flow_packets": 0, "flow_bytes": 0, "drop_rules": []}
+{"ts": 1792801969.4407911, "type": "stats", "mode": "ids", "syn_rate": {}, "counters": {"tcp_packet_in": 0, "new_connections": 0, "detections": 0, "blocks": 0}, "blocked": [], "rate_threshold": 30, "port_threshold": 10}
+{"ts": 1792801969.441752, "type": "flow_stats", "mode": "ids", "dpid": 1, "active_flows": 0, "flow_packets": 0, "flow_bytes": 0, "drop_rules": []}
+{"ts": 1792801970.4434545, "type": "stats", "mode": "ids", "syn_rate": {}, "counters": {"tcp_packet_in": 0, "new_connections": 0, "detections": 0, "blocks": 0}, "blocked": [], "rate_threshold": 30, "port_threshold": 10}
+{"ts": 1792801970.444568, "type": "flow_stats", "mode": "ids", "dpid": 1, "active_flows": 0, "flow_packets": 0, "flow_bytes": 0, "drop_rules": []}
+{"ts": 1792801971.444927, "type": "stats", "mode": "ids", "syn_rate": {}, "counters": {"tcp_packet_in": 0, "new_connections": 0, "detections": 0, "blocks": 0}, "blocked": [], "rate_threshold": 30, "port_threshold": 10}
+{"ts": 1792801971.44681, "type": "flow_stats", "mode": "ids", "dpid": 1, "active_flows": 6, "flow_packets": 0, "flow_bytes": 0, "drop_rules": []}
+{"ts": 1792801972.446143, "type": "stats", "mode": "ids", "syn_rate": {"10.0.0.2": 1}, "counters": {"tcp_packet_in": 4, "new_connections": 1, "detections": 0, "blocks": 0}, "blocked": [], "rate_threshold": 30, "port_threshold": 10}
+{"ts": 1792801972.4478803, "type": "flow_stats", "mode": "ids", "dpid": 1, "active_flows": 8, "flow_packets": 5, "flow_bytes": 356, "drop_rules": []}
+{"ts": 1792801973.4476461, "type": "stats", "mode": "ids", "syn_rate": {"10.0.0.2": 1}, "counters": {"tcp_packet_in": 7, "new_connections": 2, "detections": 0, "blocks": 0}, "blocked": [], "rate_threshold": 30, "port_threshold": 10}
+{"ts": 1792801973.4496546, "type": "flow_stats", "mode": "ids", "dpid": 1, "active_flows": 10, "flow_packets": 13, "flow_bytes": 902, "drop_rules": []}
+{"ts": 1792801974.4493952, "type": "stats", "mode": "ids", "syn_rate": {"10.0.0.2": 7}, "counters": {"tcp_packet_in": 28, "new_connections": 9, "detections": 0, "blocks": 0}, "blocked": [], "rate_threshold": 30, "port_threshold": 10}
+{"ts": 1792801974.453772, "type": "flow_stats", "mode": "ids", "dpid": 1, "active_flows": 24, "flow_packets": 69, "flow_bytes": 4724, "drop_rules": []}
+{"ts": 1792801975.4509819, "type": "stats", "mode": "ids", "syn_rate": {"10.0.0.2": 7}, "counters": {"tcp_packet_in": 49, "new_connections": 16, "detections": 0, "blocks": 0}, "blocked": [], "rate_threshold": 30, "port_threshold": 10}
+{"ts": 1792801975.4554894, "type": "flow_stats", "mode": "ids", "dpid": 1, "active_flows": 38, "flow_packets": 125, "flow_bytes": 8558, "drop_rules": []}
+{"ts": 1792801976.4523363, "type": "stats", "mode": "ids", "syn_rate": {"10.0.0.2": 8}, "counters": {"tcp_packet_in": 73, "new_connections": 24, "detections": 0, "blocks": 0}, "blocked": [], "rate_threshold": 30, "port_threshold": 10}
+{"ts": 1792801976.4592464, "type": "flow_stats", "mode": "ids", "dpid": 1, "active_flows": 54, "flow_packets": 188, "flow_bytes": 12867, "drop_rules": []}
+{"ts": 1792801977.4530957, "type": "stats", "mode": "ids", "syn_rate": {"10.0.0.2": 7}, "counters": {"tcp_packet_in": 94, "new_connections": 31, "detections": 0, "blocks": 0}, "blocked": [], "rate_threshold": 30, "port_threshold": 10}
+{"ts": 1792801977.4595737, "type": "flow_stats", "mode": "ids", "dpid": 1, "active_flows": 66, "flow_packets": 235, "flow_bytes": 16083, "drop_rules": []}

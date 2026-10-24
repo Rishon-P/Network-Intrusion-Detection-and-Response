@@ -1,0 +1,50 @@
+[
+  {
+    "id": "T1",
+    "name": "T1  Normal traffic is allowed and raises no alert.",
+    "passed": true,
+    "details": "success=100% alerts=0"
+  },
+  {
+    "id": "T2",
+    "name": "T2  Connection flood is detected and the source is blocked by an SDN drop rule.",
+    "passed": true,
+    "details": "alert=syn_flood drop_rule=True attacker_cutoff=0.145s detection_ms=148.748"
+  },
+  {
+    "id": "T3",
+    "name": "T3  Port scan is detected and blocked.",
+    "passed": true,
+    "details": "alert=port_scan drop_rule=True ports_that_reached_host=10/200"
+  },
+  {
+    "id": "T4",
+    "name": "T4  Benign clients keep working while the attacker is attacking and blocked.",
+    "passed": true,
+    "details": "h2 success=100.0% false_alerts_on_h2=0"
+  },
+  {
+    "id": "T5",
+    "name": "T5  The DROP rule expires (hard timeout) and the host can connect again.",
+    "passed": true,
+    "details": "blocked=True expired=True reconnect_success=100%"
+  },
+  {
+    "id": "T6",
+    "name": "T6  A legitimate short burst (15 connections in < 1 s) is NOT flagged.",
+    "passed": true,
+    "details": "alerts=0 success=100%"
+  },
+  {
+    "id": "T7",
+    "name": "T7  Two simultaneous attackers are both blocked; the benign client is unaffected.",
+    "passed": true,
+    "details": "h4: alert=True rule=True | h3: alert=True rule=True | h2 success=100.0%"
+  },
+  {
+    "id": "T8",
+    "name": "T8  (Limitation study) slow scan: evades the 5 s window, caught by a 30 s window.",
+    "passed": true,
+    "details": "detected with 5s window=False, with 30s window=True (expected False/True)"
+  }
+]

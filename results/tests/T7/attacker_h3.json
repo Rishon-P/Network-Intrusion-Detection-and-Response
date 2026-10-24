@@ -1,0 +1,1 @@
+{"mode": "scan", "target": "10.0.0.1", "start_ts": 1792795292.5638685, "end_ts": 1792795384.8491707, "attempts": 200, "reached": 20, "cutoff_s": 60.568, "rate": null, "delay": 0.01, "open": 0, "refused": 20, "timeout": 180, "error": 0}

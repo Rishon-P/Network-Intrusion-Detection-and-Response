@@ -1,0 +1,5 @@
+fastapi
+uvicorn[standard]
+matplotlib
+# Ryu is installed separately in its own Python 3.9 virtualenv (see README.md section 4.2):
+#   PBR_VERSION=4.34 pip install --no-build-isolation eventlet==0.30.2 "ryu==4.34"
