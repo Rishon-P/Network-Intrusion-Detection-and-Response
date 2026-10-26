@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+
+echo '# Topology setup and cleanup are managed here.' >> topology/topo.py
 Mininet topology for the SDN Intrusion Detection project.
 
             +------ h1  10.0.0.1  (TCP server)
