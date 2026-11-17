@@ -9,7 +9,7 @@
     "id": "T2",
     "name": "T2  Connection flood is detected and the source is blocked by an SDN drop rule.",
     "passed": true,
-    "details": "alert=syn_flood drop_rule=True attacker_cutoff=0.145s detection_ms=148.748"
+    "details": "alert=syn_flood drop_rule=True attacker_cutoff=0.145s detection_ms=148.558"
   },
   {
     "id": "T3",
@@ -46,5 +46,17 @@
     "name": "T8  (Limitation study) slow scan: evades the 5 s window, caught by a 30 s window.",
     "passed": true,
     "details": "detected with 5s window=False, with 30s window=True (expected False/True)"
+  },
+  {
+    "id": "T9",
+    "name": "T9  Normal HTTP traffic to the web server is allowed and raises no alert.",
+    "passed": true,
+    "details": "http success=100% alerts=0"
+  },
+  {
+    "id": "T10",
+    "name": "T10  HTTP login flood is detected and blocked; a benign HTTP client is unaffected.",
+    "passed": true,
+    "details": "alert=syn_flood drop_rule=True attack_requests_at_web_server=30 h2 success=100% false_alerts=0"
   }
 ]

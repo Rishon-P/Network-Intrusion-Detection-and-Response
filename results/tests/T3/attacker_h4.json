@@ -1,1 +1,1 @@
-{"mode": "scan", "target": "10.0.0.1", "start_ts": 1792802007.6737425, "end_ts": 1792802028.9382665, "attempts": 200, "reached": 10, "cutoff_s": 0.123, "rate": null, "delay": 0.01, "open": 0, "refused": 10, "timeout": 190, "error": 0}
+{"mode": "scan", "target": "10.0.0.1", "start_ts": 1794911105.9562685, "end_ts": 1794911127.1988065, "attempts": 200, "reached": 10, "cutoff_s": 0.112, "rate": null, "delay": 0.01, "open": 0, "refused": 10, "timeout": 190, "error": 0}
