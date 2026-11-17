@@ -97,7 +97,10 @@ def main():
     lines = ["| Attack | Mode | Detected | Detection (ms) | Response (ms) | Attack conns at server | "
              "Attack probes reaching host | Benign RTT during (ms) | Benign success (%) | False positives |",
              "|---|---|---|---|---|---|---|---|---|---|"]
-    conds = [("flood", r) for r in rates] + ([("scan", None)] if any(r["attack"] == "scan" for r in rows) else [])
+    http_rates = sorted({int(r["rate"]) for r in rows if r["attack"] == "httpflood" and r["rate"]})
+    conds = ([("flood", r) for r in rates]
+             + ([("scan", None)] if any(r["attack"] == "scan" for r in rows) else [])
+             + [("httpflood", r) for r in http_rates])
     for attack, rate in conds:
         for m in MODES:
             cells = []
@@ -105,7 +108,7 @@ def main():
                         "attack_reached_host", "benign_rtt_during_ms", "benign_success_during_pct", "false_positives"]:
                 mu, _ = agg(rows, m, attack, rate, col)
                 cells.append("-" if mu is None else ("%.1f" % mu))
-            name = "flood %d/s" % rate if attack == "flood" else "port scan"
+            name = {"flood": "flood %s/s" % rate, "httpflood": "HTTP flood %s/s" % rate}.get(attack, "port scan")
             lines.append("| %s | %s | %s |" % (name, LABELS[m], " | ".join(cells)))
     with open(os.path.join(FIG, "results_table.md"), "w") as f:
         f.write("\n".join(lines) + "\n")

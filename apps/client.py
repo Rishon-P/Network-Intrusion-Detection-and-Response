@@ -24,13 +24,19 @@ import sys
 import time
 
 
-def request(host, port, text, timeout):
+def request(host, port, text, timeout, protocol="tcp"):
     t0 = time.perf_counter()
     ok = False
     try:
         with socket.create_connection((host, port), timeout=timeout) as s:
-            s.sendall(("ECHO %s\n" % text).encode())
-            ok = s.recv(1024).startswith(b"OK")
+            if protocol == "http":
+                # a real HTTP/1.1 GET; success means "200 OK" came back
+                s.sendall(("GET /?id=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n"
+                           % (text, host)).encode())
+                ok = s.recv(1024).startswith(b"HTTP/1.1 200")
+            else:
+                s.sendall(("ECHO %s\n" % text).encode())
+                ok = s.recv(1024).startswith(b"OK")
     except OSError:
         ok = False
     return ok, (time.perf_counter() - t0) * 1000.0
@@ -46,6 +52,8 @@ def percentile(values, p):
 
 def main():
     ap = argparse.ArgumentParser(description="Benign TCP client")
+    ap.add_argument("--protocol", choices=["tcp", "http"], default="tcp",
+                    help="tcp = ECHO line protocol, http = HTTP/1.1 GET requests")
     ap.add_argument("--host", default="10.0.0.1")
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--interval", type=float, default=0.2,
@@ -73,7 +81,7 @@ def main():
             break
         seq += 1
         ts = time.time()
-        ok, rtt = request(a.host, a.port, "%s-%d" % (a.name, seq), a.timeout)
+        ok, rtt = request(a.host, a.port, "%s-%d" % (a.name, seq), a.timeout, a.protocol)
         if ok:
             oks += 1
             rtts.append(rtt)

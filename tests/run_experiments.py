@@ -99,15 +99,17 @@ def run_trial(a, mode, attack, rate, rep):
     tag = "%s_%s%s_r%d" % (mode, attack, rate or "", rep)
     out = os.path.join(a.out, "trials", tag)
     env = {"BLOCK_TIMEOUT": 60, "STATIC_DELAY": a.static_delay}
-    with Lab(a.ryu, mode, env=env, out_dir=out) as lab:
+    protocol = "http" if attack == "httpflood" else "tcp"
+    with Lab(a.ryu, mode, env=env, out_dir=out, protocol=protocol) as lab:
         t0 = time.time()
         clients = [lab.run_client(lab.h2, "h2", duration=a.total, interval=0.2),
                    lab.run_client(lab.h3, "h3", duration=a.total, interval=0.2)]
         time.sleep(a.attack_start)
         t_attack = time.time()
-        if attack == "flood":
-            p, att_json = lab.run_attacker(lab.h4, "h4", mode="flood", rate=rate,
-                                           duration=a.attack_duration)
+        if attack in ("flood", "httpflood"):
+            p, att_json = lab.run_attacker(lab.h4, "h4",
+                                           mode="flood" if attack == "flood" else "http-flood",
+                                           rate=rate, duration=a.attack_duration)
         else:
             p, att_json = lab.run_attacker(lab.h4, "h4", mode="scan", ports="1-200", delay=0.01, timeout=0.1)
         p.wait()
@@ -126,6 +128,9 @@ def main():
     ap.add_argument("--rates", nargs="+", type=int, default=[50, 100, 200, 400])
     ap.add_argument("--scan", action="store_true", default=True, help="also run the port-scan condition")
     ap.add_argument("--no-scan", dest="scan", action="store_false")
+    ap.add_argument("--http", action="store_true",
+                    help="also run the HTTP login-flood condition (web server on h1)")
+    ap.add_argument("--http-rates", nargs="+", type=int, default=[200])
     ap.add_argument("--reps", type=int, default=3)
     ap.add_argument("--total", type=float, default=20, help="seconds of benign traffic per trial")
     ap.add_argument("--attack-start", type=float, default=5)
@@ -137,6 +142,8 @@ def main():
     conditions = [("flood", r) for r in a.rates]
     if a.scan:
         conditions.append(("scan", None))
+    if a.http:
+        conditions += [("httpflood", r) for r in a.http_rates]
 
     summary_path = os.path.join(a.out, "summary.csv")
     new_file = not os.path.exists(summary_path)

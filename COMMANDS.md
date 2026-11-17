@@ -69,6 +69,9 @@ These commands run inside the Mininet CLI, not in a regular shell.
 | `h2 python3 apps/client.py --host 10.0.0.1 --duration 600 --out results/h2.csv &` | Starts a normal client on `h2` for ten minutes and records its measurements in `results/h2.csv`. |
 | `h4 python3 apps/attacker.py --host 10.0.0.1 --mode flood --rate 200 --duration 5` | Generates a controlled TCP connection flood from `h4` at 200 attempts per second for five seconds. The IDS should detect and block the source. |
 | `h5 python3 apps/attacker.py --host 10.0.0.1 --mode scan --ports 1-200 --delay 0.01 --timeout 0.1` | Probes TCP ports 1–200 from `h5` to demonstrate port scan detection. |
+| `h1 python3 apps/server.py --host 10.0.0.1 --protocol http --log results/server_log.csv &` | (Instead of the TCP server) starts the web (HTTP/1.1) server on `h1`. |
+| `h2 python3 apps/client.py --host 10.0.0.1 --protocol http --count 5` | Benign HTTP client; expect `"failed": 0`. |
+| `h4 python3 apps/attacker.py --host 10.0.0.1 --mode http-flood --rate 200 --duration 5` | HTTP flood of `GET /login` requests; detected as a connection flood and blocked. |
 | `sh ovs-ofctl -O OpenFlow13 dump-flows s1 \| grep drop` | Displays installed OpenFlow DROP rules on switch `s1`. |
 | `exit` | Exits the Mininet CLI and stops the topology process. |
 

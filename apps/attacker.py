@@ -9,6 +9,10 @@ Modes
 flood : open --rate full TCP connections per second to one port for --duration
         seconds and close each one immediately (a "connection flood", the
         socket-level analogue of a SYN flood).
+http-flood : like flood, but every connection also sends one HTTP GET request
+        (a login-page brute-force style flood against a web server started
+        with "server.py --protocol http"). Each request is a new connection,
+        so the controller counts it exactly like any other new connection.
 scan  : controlled TCP connect() port scan of --ports (e.g. 1-200), one probe
         every --delay seconds. A tiny delay is a fast scan; a large delay is
         a slow, evasive scan.
@@ -37,13 +41,18 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 
-def probe(host, port, timeout):
+HTTP_ATTACK_REQUEST = b"GET /login?user=admin&pw=guess HTTP/1.1\r\nHost: target\r\nConnection: close\r\n\r\n"
+
+
+def probe(host, port, timeout, http=False):
     """One TCP connection attempt. Returns (start_ts, result)."""
     ts = time.time()
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(timeout)
     try:
         s.connect((host, port))
+        if http:
+            s.sendall(HTTP_ATTACK_REQUEST)   # fire the request, do not wait for the reply
         return ts, "open"
     except ConnectionRefusedError:
         return ts, "refused"
@@ -55,7 +64,7 @@ def probe(host, port, timeout):
         s.close()
 
 
-def run_flood(host, port, rate, duration, timeout):
+def run_flood(host, port, rate, duration, timeout, http=False):
     results = []
     interval = 1.0 / rate
     workers = min(600, max(50, int(rate * timeout * 2)))
@@ -67,7 +76,7 @@ def run_flood(host, port, rate, duration, timeout):
             wait = t_next - time.monotonic()
             if wait > 0:
                 time.sleep(wait)
-            futs.append(ex.submit(probe, host, port, timeout))
+            futs.append(ex.submit(probe, host, port, timeout, http))
             t_next += interval
         results = [f.result() for f in futs]
     return results
@@ -92,10 +101,10 @@ def parse_ports(spec):
 def main():
     ap = argparse.ArgumentParser(description="Controlled attack traffic (lab use only)")
     ap.add_argument("--host", default="10.0.0.1")
-    ap.add_argument("--port", type=int, default=8080, help="target port for flood mode")
-    ap.add_argument("--mode", choices=["flood", "scan"], required=True)
-    ap.add_argument("--rate", type=float, default=100, help="flood: connections per second")
-    ap.add_argument("--duration", type=float, default=5, help="flood: seconds")
+    ap.add_argument("--port", type=int, default=8080, help="target port for flood / http-flood")
+    ap.add_argument("--mode", choices=["flood", "http-flood", "scan"], required=True)
+    ap.add_argument("--rate", type=float, default=100, help="flood / http-flood: connections per second")
+    ap.add_argument("--duration", type=float, default=5, help="flood / http-flood: seconds")
     ap.add_argument("--ports", default="1-200", help="scan: range '1-200' or list '22,80,8080'")
     ap.add_argument("--delay", type=float, default=0.01, help="scan: seconds between probes")
     ap.add_argument("--timeout", type=float, default=0.5, help="per-probe connect timeout")
@@ -103,8 +112,8 @@ def main():
     a = ap.parse_args()
 
     start = time.time()
-    if a.mode == "flood":
-        res = run_flood(a.host, a.port, a.rate, a.duration, a.timeout)
+    if a.mode in ("flood", "http-flood"):
+        res = run_flood(a.host, a.port, a.rate, a.duration, a.timeout, http=(a.mode == "http-flood"))
     else:
         res = run_scan(a.host, parse_ports(a.ports), a.delay, a.timeout)
     end = time.time()
@@ -119,7 +128,7 @@ def main():
         "mode": a.mode, "target": a.host, "start_ts": start, "end_ts": end,
         "attempts": len(res), "reached": counts["open"] + counts["refused"],
         "cutoff_s": round(max(reached_ts) - start, 3) if reached_ts else None,
-        "rate": a.rate if a.mode == "flood" else None,
+        "rate": a.rate if a.mode != "scan" else None,
         "delay": a.delay if a.mode == "scan" else None,
     }
     summary.update(counts)

@@ -32,7 +32,7 @@ For copy-ready setup, startup, traffic-generation, log-inspection, and cleanup c
 
 | Assignment requirement | Where it is implemented |
 |---|---|
-| Generate controlled TCP security-test traffic | `apps/attacker.py`, `apps/client.py` |
+| Generate controlled TCP security-test traffic | `apps/attacker.py`, `apps/client.py` (plain TCP and an HTTP/1.1 mode) |
 | Monitor connection rates | `controller/detector.py` (per-source sliding window) |
 | Collect flow statistics | `controller/ids_ryu.py` polls `OFPFlowStatsRequest` every second |
 | Define intrusion-detection rules | Flood: more than 30 new connections from one source in 1 s. Port scan: more than 10 distinct destination ports in 5 s |
@@ -79,13 +79,14 @@ For copy-ready setup, startup, traffic-generation, log-inspection, and cleanup c
 ## 3. Repository layout
 
 ```
-apps/        server.py  client.py  attacker.py      TCP socket application and test traffic
+apps/        server.py  client.py  attacker.py      TCP/HTTP socket application and test traffic
 controller/  ids_ryu.py  detector.py                Ryu OpenFlow 1.3 controller and detection rules
 topology/    topo.py                                Mininet topology
 dashboard/   dashboard.py                           live web dashboard (FastAPI + WebSocket)
 tests/       test_detector.py                       unit tests of the rules (no Mininet)
              test_controller_offline.py             controller test with a fake switch (Ryu only)
-             run_tests.py                           8 functional test cases in Mininet
+             test_http_app.py                       loopback test of the HTTP mode (no Mininet, no Ryu)
+             run_tests.py                           10 functional test cases in Mininet
              run_experiments.py  plot_results.py    performance evaluation and graphs
              lab.py                                 helper that starts controller, network and server
 docs/        legacy_simulation_v5.py                first software-only simulation (reference only)
@@ -193,6 +194,25 @@ with the up-arrow key.
 
 **Cleanup:** type `exit`, press Ctrl+C in terminals 1 and 2, then run `sudo mn -c`.
 
+### 6.1 HTTP (web) mode
+
+The same server, client and attacker can speak HTTP/1.1 so the project is demonstrated on web traffic, not only raw TCP.
+
+| Command at `mininet>` | What it does |
+|---|---|
+| `h1 python3 apps/server.py --host 10.0.0.1 --protocol http --log results/server_log.csv &` | web server: routes `/` , `/login`, `/status` return 200, other paths 404, non-GET 405, malformed requests 400; one request per connection (`Connection: close`) |
+| `h2 python3 apps/client.py --host 10.0.0.1 --protocol http --count 5` | benign browser-like client, sends `GET /?id=...` and checks for `HTTP/1.1 200` |
+| `h4 python3 apps/attacker.py --host 10.0.0.1 --mode http-flood --rate 200 --duration 5` | HTTP flood: 200 `GET /login?user=admin&pw=guess` requests per second (a login-guessing style flood) |
+
+How it is detected: each HTTP request opens a new TCP connection, so the controller sees one new SYN per request and the
+existing connection-rate rule blocks the source (test T10). No controller code changed; the detection works at the
+transport layer. Without the IDS the web server queue saturates and normal users see timeouts, exactly as in the TCP experiment.
+
+Dashboard: the **Run HTTP flood from hN** button launches the same attack from the selected sender (start the server in HTTP mode first).
+
+Loopback check without Mininet: `python3 tests/test_http_app.py` (15 checks).
+HTTP experiment: `sudo python3 tests/run_experiments.py --ryu $HOME/ryu-env/bin/ryu-manager --http --http-rates 200`.
+
 ## 7. Automated test cases
 
 ```bash
@@ -211,6 +231,8 @@ Each test starts a fresh controller, network and server. Results are saved to `r
 | T6 | Legitimate burst (15 connections in under 1 s) | not flagged (no false positive) | PASS |
 | T7 | Two simultaneous attackers (flood and scan) | both blocked, benign client unaffected | PASS |
 | T8 | Slow scan (limitation study) | evades the 5 s window, caught with a 30 s window | PASS |
+| T9 | Normal HTTP traffic | 30 HTTP requests succeed, no alert | run in Mininet to confirm |
+| T10 | HTTP flood (`GET /login` x 200/s) | flood alert, DROP rule, fewer than 100 requests reach the web server, HTTP client on h2 unaffected | run in Mininet to confirm |
 
 ## 8. Performance evaluation
 
@@ -283,10 +305,14 @@ Server options: `--workers`, `--service-time`, `--queue-size`. Attacker options:
 * **Detection time is measured from the start of the source's current activity burst** (a 2 s quiet gap starts a new burst), so it assumes
   the attacker was idle beforehand. A host that sends normal traffic and then attacks shows an inflated detection time, although the alert itself fires on the 31st connection.
 * The detection threshold lets about 30 attack connections through before blocking.
+* **Detection is at the TCP level, not the HTTP level.** The IDS sees connections, not the contents of requests. An HTTP flood that reuses
+  one kept-alive connection (HTTP/1.1 keep-alive) sends many requests per SYN and would not trigger the connection-rate rule. Our
+  server and attacker use one request per connection, which is the case the rule covers. Detecting keep-alive floods would need flow
+  byte/packet statistics per flow or an application-layer proxy or WAF (future work). HTTPS payloads could not be inspected in any case.
 * Every new connection is processed by the controller, which would limit scalability on a large network.
 * The server's capacity is modelled, so absolute latency and success figures depend on that choice; the comparison between modes is the valid result.
 * The "static" baseline is a fixed 5 s delay, not a real operator.
-* Results come from 3 repetitions on a one-switch, four-host topology.
+* Results come from 3 repetitions on a one-switch topology (the first results used four hosts; the topology now has ten, so re-run the tests before submission).
 
 ## 11. Troubleshooting
 

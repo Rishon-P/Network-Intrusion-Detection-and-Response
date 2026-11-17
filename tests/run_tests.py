@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Automated functional test cases (Mininet + Ryu + TCP apps).
+Automated functional test cases (Mininet + Ryu + TCP/HTTP apps).
 
     sudo python3 tests/run_tests.py --ryu /home/<you>/ryu-env/bin/ryu-manager
     sudo python3 tests/run_tests.py --ryu ... --only T2 T3
@@ -153,10 +153,43 @@ def t8_slow_scan_evasion(a):
         res["5s_window"], res["30s_window"])
 
 
+def t9_http_normal(a):
+    """T9  Normal HTTP traffic to the web server is allowed and raises no alert."""
+    with Lab(a.ryu, "ids", out_dir=a.path("T9"), protocol="http") as lab:
+        p, csv_path = lab.run_client(lab.h2, "h2", count=30, interval=0.1)
+        p.wait()
+        ratio = success_ratio(csv_path)
+        alerts = lab.alerts()
+        return (ratio == 1.0 and not alerts,
+                "http success=%.0f%% alerts=%d" % (100 * (ratio or 0), len(alerts)))
+
+
+def t10_http_flood_blocked(a):
+    """T10  HTTP login flood is detected and blocked; a benign HTTP client is unaffected."""
+    with Lab(a.ryu, "ids", out_dir=a.path("T10"), protocol="http") as lab:
+        pc, csv_path = lab.run_client(lab.h2, "h2", duration=10, interval=0.2)
+        time.sleep(2)
+        pa, summ = lab.run_attacker(lab.h4, "h4", mode="http-flood", rate=200, duration=5)
+        pa.wait()
+        pc.wait()
+        time.sleep(1)
+        alerts = lab.alerts(H4)
+        rule = lab.has_drop_rule(H4)
+        reached = len(lab.server_rows(H4))
+        ratio = success_ratio(csv_path)
+        bad = lab.alerts(H2)
+        ok = (bool(alerts) and alerts[0]["kind"] == "syn_flood" and rule and reached < 100
+              and (ratio or 0) >= 0.95 and not bad)
+        return ok, ("alert=%s drop_rule=%s attack_requests_at_web_server=%d h2 success=%.0f%% "
+                    "false_alerts=%d" % (alerts[0]["kind"] if alerts else None, rule, reached,
+                                         100 * (ratio or 0), len(bad)))
+
+
 TESTS = [("T1", t1_normal_traffic), ("T2", t2_flood_blocked), ("T3", t3_port_scan_blocked),
          ("T4", t4_benign_unaffected), ("T5", t5_block_expires),
          ("T6", t6_no_false_positive_on_small_burst), ("T7", t7_two_attackers),
-         ("T8", t8_slow_scan_evasion)]
+         ("T8", t8_slow_scan_evasion),
+         ("T9", t9_http_normal), ("T10", t10_http_flood_blocked)]
 
 
 def main():

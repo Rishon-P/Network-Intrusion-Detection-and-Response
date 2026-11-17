@@ -109,8 +109,8 @@ def lab_status():
 @app.post("/api/lab/action")
 def start_lab_action(payload: dict = Body(...)):
     mode = payload.get("mode")
-    if mode not in ("flood", "scan"):
-        raise HTTPException(status_code=400, detail="mode must be flood or scan")
+    if mode not in ("flood", "http-flood", "scan"):
+        raise HTTPException(status_code=400, detail="mode must be flood, http-flood or scan")
     sender = payload.get("sender", "h4")
     if not isinstance(sender, str) or sender not in {"h%d" % number for number in range(2, 11)}:
         raise HTTPException(status_code=400, detail="sender must be a Mininet client h2-h10")
@@ -201,6 +201,7 @@ PAGE = r"""<!DOCTYPE html>
         <select id="attack-source" onchange="updateAttackControls()" class="ml-1 px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white"></select>
       </label>
       <button id="flood-button" onclick="launchLabAction('flood')" disabled class="px-4 py-2 rounded-xl bg-amber-500/20 text-amber-200 border border-amber-500/30 text-xs font-semibold disabled:opacity-40">Run flood from h4</button>
+      <button id="http-button" onclick="launchLabAction('http-flood')" disabled class="px-4 py-2 rounded-xl bg-fuchsia-500/20 text-fuchsia-200 border border-fuchsia-500/30 text-xs font-semibold disabled:opacity-40">Run HTTP flood from h4</button>
       <button id="scan-button" onclick="launchLabAction('scan')" disabled class="px-4 py-2 rounded-xl bg-rose-500/20 text-rose-200 border border-rose-500/30 text-xs font-semibold disabled:opacity-40">Run port scan from h4</button>
     </div>
   </section>
@@ -346,12 +347,14 @@ async function refreshLabStatus(){
     S.availableSenders = available && Array.isArray(data.senders) ? data.senders.map(sender => sender.name) : [];
     syncAttackSources();
     $('flood-button').disabled = !available || data.busy;
+    $('http-button').disabled = !available || data.busy;
     $('scan-button').disabled = !available || data.busy;
     $('add-sender').disabled = !available || !S.availableSenders.some(name => !S.visibleSenders.includes(name));
     status.textContent = available ? (data.busy ? 'Traffic action running · ' + $('attack-source').value + ' → h1' : 'Mininet ready · ' + $('attack-source').value + ' → h1') : data.message;
     status.className = 'text-xs mt-2 ' + (available ? 'text-emerald-300' : 'text-amber-300');
   } catch (error) {
     $('flood-button').disabled = true;
+    $('http-button').disabled = true;
     $('scan-button').disabled = true;
     $('add-sender').disabled = true;
     status.textContent = 'Could not check Mininet status.';
@@ -362,8 +365,10 @@ async function launchLabAction(mode){
   const status = $('lab-status');
   const sender = $('attack-source').value;
   $('flood-button').disabled = true;
+  $('http-button').disabled = true;
   $('scan-button').disabled = true;
-  status.textContent = 'Starting ' + (mode === 'flood' ? 'connection flood' : 'port scan') + ' from ' + sender + '…';
+  const label = {'flood':'connection flood','http-flood':'HTTP flood','scan':'port scan'}[mode];
+  status.textContent = 'Starting ' + label + ' from ' + sender + '…';
   try {
     const response = await fetch('/api/lab/action', {
       method: 'POST', headers: {'Content-Type':'application/json'},
@@ -371,7 +376,7 @@ async function launchLabAction(mode){
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || 'Could not start traffic');
-    status.textContent = (mode === 'flood' ? 'Flood' : 'Port scan') +
+    status.textContent = label +
       ' started from ' + data.source + '. Waiting for Ryu detection…';
   } catch (error) {
     status.textContent = error.message;
@@ -396,6 +401,7 @@ function syncAttackSources(){
 function updateAttackControls(){
   const sender = $('attack-source').value || 'h4';
   $('flood-button').textContent = 'Run flood from ' + sender;
+  $('http-button').textContent = 'Run HTTP flood from ' + sender;
   $('scan-button').textContent = 'Run port scan from ' + sender;
 }
 

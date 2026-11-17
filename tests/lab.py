@@ -78,7 +78,8 @@ def mean(values):
 # ----------------------------------------------------------------------
 class Lab:
     def __init__(self, ryu_manager, mode="ids", env=None, out_dir=None,
-                 server_opts=None, quiet=True):
+                 server_opts=None, quiet=True, protocol="tcp"):
+        self.protocol = protocol           # "tcp" (ECHO protocol) or "http" (HTTP/1.1 GET)
         self.ryu = ryu_manager
         self.mode = mode
         self.env_overrides = env or {}
@@ -140,12 +141,13 @@ class Lab:
         slog = open(self.path("server.out"), "w")
         self.server = self.h1.popen(
             [PY, os.path.join(APPS, "server.py"), "--host", SERVER_IP,
-             "--port", str(SERVER_PORT), "--log", self.server_log] + self.server_opts,
+             "--port", str(SERVER_PORT), "--log", self.server_log,
+             "--protocol", self.protocol] + self.server_opts,
             stdout=slog, stderr=subprocess.STDOUT)
         self.procs.append(self.server)
         time.sleep(1.0)
-        ok = self.h2.cmd("%s %s --host %s --count 1 --interval 0" %
-                         (PY, os.path.join(APPS, "client.py"), SERVER_IP))
+        ok = self.h2.cmd("%s %s --host %s --protocol %s --count 1 --interval 0" %
+                         (PY, os.path.join(APPS, "client.py"), SERVER_IP, self.protocol))
         if '"failed": 0' not in ok:
             raise RuntimeError("server on h1 is not reachable from h2: %s" % ok)
         time.sleep(1.0)
@@ -187,7 +189,7 @@ class Lab:
         """Start a benign client in the background. Returns (Popen, csv_path)."""
         out = self.path("client_%s.csv" % name)
         cmd = [PY, os.path.join(APPS, "client.py"), "--host", SERVER_IP, "--name", name,
-               "--interval", str(interval), "--out", out]
+               "--protocol", self.protocol, "--interval", str(interval), "--out", out]
         if duration is not None:
             cmd += ["--duration", str(duration)]
         if count is not None:

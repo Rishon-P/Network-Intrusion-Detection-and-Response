@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 """
-
-echo '# Topology setup and cleanup are managed here.' >> topology/topo.py
 Mininet topology for the SDN Intrusion Detection project.
 
             +------ h1  10.0.0.1  (TCP server)
@@ -76,8 +74,8 @@ class DashboardActionHandler(BaseHTTPRequestHandler):
             return
 
         mode = payload.get("mode")
-        if mode not in ("flood", "scan"):
-            self._reply(400, {"error": "mode must be flood or scan"})
+        if mode not in ("flood", "http-flood", "scan"):
+            self._reply(400, {"error": "mode must be flood, http-flood or scan"})
             return
         sender_name = payload.get("sender", "h4")
         sender = next((host for host in self.net.hosts if host.name == sender_name
@@ -87,8 +85,8 @@ class DashboardActionHandler(BaseHTTPRequestHandler):
             return
 
         attacker = os.path.join(ROOT, "apps", "attacker.py")
-        if mode == "flood":
-            args = ["--mode", "flood", "--rate", "200", "--duration", "5"]
+        if mode in ("flood", "http-flood"):
+            args = ["--mode", mode, "--rate", "200", "--duration", "5"]
         else:
             args = ["--mode", "scan", "--ports", "1-200", "--delay", "0.01", "--timeout", "0.1"]
         command = [sys.executable, attacker, "--host", "10.0.0.1"] + args

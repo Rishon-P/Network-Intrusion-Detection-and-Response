@@ -19,6 +19,15 @@ Application protocol (text, one command per line)
   TIME          -> OK <epoch seconds>
   QUIT          -> BYE   (and the connection is closed)
 
+HTTP mode (--protocol http)
+---------------------------
+Same acceptor, queue and workers, but the worker speaks HTTP/1.1 (one request
+per connection, "Connection: close"):
+  GET /            -> 200 home page
+  GET /login?...   -> 200 login page (a typical target of brute-force floods)
+  GET /status      -> 200 small JSON document
+  anything else    -> 404, other methods -> 405, malformed -> 400
+
 Every accepted/rejected connection is appended to --log (CSV: ts,src_ip,event)
 so the experiments can count how many attack connections reached the server.
 
@@ -34,7 +43,8 @@ import time
 
 
 class Server:
-    def __init__(self, host, port, workers, service_time, queue_size, log_path):
+    def __init__(self, host, port, workers, service_time, queue_size, log_path, protocol="tcp"):
+        self.protocol = protocol
         self.host = host
         self.port = port
         self.service_time = service_time
@@ -62,8 +72,8 @@ class Server:
         srv.settimeout(0.5)
         for _ in range(self.workers):
             threading.Thread(target=self.worker, daemon=True).start()
-        print("[server] listening on %s:%d (workers=%d, service_time=%.3fs)"
-              % (self.host, self.port, self.workers, self.service_time), flush=True)
+        print("[server] %s listening on %s:%d (workers=%d, service_time=%.3fs)"
+              % (self.protocol, self.host, self.port, self.workers, self.service_time), flush=True)
         try:
             while not self.stop.is_set():
                 try:
@@ -92,7 +102,10 @@ class Server:
             except queue.Empty:
                 continue
             try:
-                self.handle(conn)
+                if self.protocol == "http":
+                    self.handle_http(conn)
+                else:
+                    self.handle(conn)
             except (OSError, ValueError):
                 pass
             finally:
@@ -118,6 +131,44 @@ class Server:
             if close:
                 return
 
+    # ------------------------------------------------------------------
+    # HTTP mode
+    # ------------------------------------------------------------------
+    def handle_http(self, conn):
+        time.sleep(self.service_time)         # same modelled per-connection work
+        conn.settimeout(2.0)
+        data = b""
+        while b"\r\n\r\n" not in data:        # a request ends with an empty line
+            chunk = conn.recv(1024)
+            if not chunk:
+                return                         # client closed without a full request
+            data += chunk
+            if len(data) > 8192:
+                return                         # header too large: drop it
+        request_line = data.split(b"\r\n", 1)[0].decode("latin-1")
+        status, body = self.http_route(request_line.split())
+        head = ("HTTP/1.1 %s\r\nContent-Type: text/html\r\nContent-Length: %d\r\n"
+                "Connection: close\r\n\r\n" % (status, len(body)))
+        conn.sendall(head.encode() + body)
+        self.stats["served"] += 1
+
+    @staticmethod
+    def http_route(parts):
+        """parts = [method, path, version]; returns (status line, body bytes)."""
+        if len(parts) != 3 or not parts[2].startswith("HTTP/"):
+            return "400 Bad Request", b"<h1>400 Bad Request</h1>"
+        method, path = parts[0], parts[1]
+        if method != "GET":
+            return "405 Method Not Allowed", b"<h1>405 Method Not Allowed</h1>"
+        route = path.split("?", 1)[0]
+        if route == "/":
+            return "200 OK", b"<h1>Campus portal</h1>"
+        if route == "/login":
+            return "200 OK", b"<h1>Login</h1><form></form>"
+        if route == "/status":
+            return "200 OK", b'{"status": "up"}'
+        return "404 Not Found", b"<h1>404 Not Found</h1>"
+
     @staticmethod
     def respond(cmd):
         up = cmd.upper()
@@ -134,6 +185,8 @@ class Server:
 
 def main():
     ap = argparse.ArgumentParser(description="Threaded TCP server (IDS project)")
+    ap.add_argument("--protocol", choices=["tcp", "http"], default="tcp",
+                    help="tcp = line protocol (PING/ECHO), http = HTTP/1.1 GET server")
     ap.add_argument("--host", default="0.0.0.0")
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--workers", type=int, default=4, help="worker threads")
@@ -142,7 +195,7 @@ def main():
     ap.add_argument("--queue-size", type=int, default=200, help="pending-connection queue length")
     ap.add_argument("--log", default=None, help="CSV log of accepted/rejected connections")
     a = ap.parse_args()
-    Server(a.host, a.port, a.workers, a.service_time, a.queue_size, a.log).serve_forever()
+    Server(a.host, a.port, a.workers, a.service_time, a.queue_size, a.log, a.protocol).serve_forever()
 
 
 if __name__ == "__main__":
